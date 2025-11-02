@@ -1,6 +1,11 @@
-# Data folders
-Data/
-Data\ Analysis/Data\ Viz/
+# Exclude data directories
+data/
+OLD/
+**/data/
+**/results/
+
+# Exclude all CSV data files (critical - no data should be committed)
+*.csv
 
 # Python
 __pycache__/
@@ -8,12 +13,14 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg-info/
+dist/
+build/
 
 # Virtual environments
 venv/
 env/
 ENV/
-.venv
 
 # IDE
 .vscode/
@@ -26,13 +33,19 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Model checkpoints (optional - uncomment if you don't want to commit models)
-# Stage\ Segmentation/results/**/*.pth
-# Stage\ Segmentation/models/
-
-# Experiment results (optional - uncomment if you don't want to commit results)
-# Stage\ Segmentation/results/
-
 # Logs
 *.log
 
+# Large visualization/image outputs (too large for GitHub - can be regenerated)
+visualizations/
+augmented_visualizations/
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Sequence-Preserving Augmentation visualizations
+Sequence-Preserving Augmentation/visualizations/
+Sequence-Preserving Augmentation/visualizations_with_sources/
+Sequence-Preserving Augmentation/Augmented Data/
+Sequence-Preserving Augmentation/viz_new/
