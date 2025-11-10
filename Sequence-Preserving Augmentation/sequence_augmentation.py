@@ -25,6 +25,17 @@ class TimeseriesSegment:
     source_file: str
     
     @property
+    def label(self) -> str:
+        """Infer dataset label (e.g., NPT, OD) from the source file path"""
+        normalized_path = os.path.normpath(self.source_file)
+        parts = normalized_path.split(os.sep)
+        if 'Train' in parts:
+            train_idx = parts.index('Train')
+            if train_idx + 1 < len(parts):
+                return parts[train_idx + 1]
+        return ""
+    
+    @property
     def start_z(self) -> float:
         return self.data['Z'].iloc[0] if len(self.data) > 0 else 0
     
@@ -376,7 +387,8 @@ class SequencePreservingAugmenter:
     def create_augmented_from_sequence(self, sequence: List[str], 
                                       reference_file: Optional[str] = None,
                                       num_augmentations: int = 1,
-                                      min_length: int = 500) -> List[Tuple[pd.DataFrame, List[Dict], str]]:
+                                      min_length: int = 500,
+                                      target_label: Optional[str] = None) -> List[Tuple[pd.DataFrame, List[Dict], str]]:
         """
         Create augmented timeseries following a specific stage sequence, preserving reference jumps
         
@@ -385,6 +397,7 @@ class SequencePreservingAugmenter:
             reference_file: Path to reference timeseries file (optional, for preserving jumps)
             num_augmentations: Number of augmented versions to create
             min_length: Minimum length for valid timeseries
+            target_label: Dataset label the augmentation belongs to (e.g., 'NPT')
         
         Returns:
             List of (dataframe, metadata, reference_file) tuples
@@ -416,8 +429,14 @@ class SequencePreservingAugmenter:
             try:
                 # For each stage in sequence, randomly select a segment
                 selected_segments = []
-                for stage in sequence:
+                for idx, stage in enumerate(sequence):
                     available_segments = self.segment_database[stage]
+                    if target_label == 'NPT' and idx == len(sequence) - 1:
+                        npt_segments = [seg for seg in available_segments if seg.label == 'NPT']
+                        if npt_segments:
+                            available_segments = npt_segments
+                        else:
+                            print("    Warning: No NPT-origin segments available for final stage; using general pool")
                     if available_segments:
                         selected_segment = random.choice(available_segments)
                         selected_segments.append(selected_segment)
@@ -521,7 +540,8 @@ class SequencePreservingAugmenter:
                         stages,
                         reference_file=ref_file,  # Pass reference file for jump preservation
                         num_augmentations=num_from_this_ref,
-                        min_length=500
+                        min_length=500,
+                        target_label=label
                     )
                     
                     all_results.extend(results)
@@ -535,7 +555,8 @@ class SequencePreservingAugmenter:
                             stages,
                             reference_file=ref_file,
                             num_augmentations=1,
-                            min_length=500
+                            min_length=500,
+                            target_label=label
                         )
                         all_results.extend(results)
                         remaining -= len(results)
@@ -573,7 +594,8 @@ class SequencePreservingAugmenter:
                             stages,
                             reference_file=ref_file,
                             num_augmentations=1,
-                            min_length=500
+                            min_length=500,
+                            target_label=label
                         )
                         
                         if results:
